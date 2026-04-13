@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Genesis — Bible Study Hub</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0a1a; font-family: system-ui, sans-serif; min-height: 100vh; padding: 20px 16px 60px; color: white; }
+
+    .back-btn { display: inline-flex; align-items: center; gap: 6px; color: #34d399; font-size: 13px; text-decoration: none; margin-bottom: 20px; }
+    .back-btn:hover { color: white; }
+
+    .plan-header { text-align: center; margin-bottom: 24px; }
+    .plan-header .icon { font-size: 40px; margin-bottom: 8px; }
+    .plan-header h1 { font-size: 22px; font-weight: 900; }
+    .plan-header p { font-size: 13px; color: #9ca3af; margin-top: 4px; }
+    .progress-wrap { margin: 14px auto 0; max-width: 320px; }
+    .progress-track { background: rgba(255,255,255,0.1); border-radius: 20px; height: 6px; }
+    .progress-fill { height: 6px; border-radius: 20px; background: #10b981; transition: width 0.4s; }
+    .progress-label { font-size: 11px; color: #6b7280; margin-top: 5px; text-align: center; }
+
+    .notes-btn { width: 100%; margin-bottom: 14px; padding: 12px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: white; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+    .notes-btn:hover { background: rgba(16,185,129,0.15); border-color: #10b98155; }
+
+    .day-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: background 0.15s; }
+    .day-item:hover { background: rgba(16,185,129,0.1); }
+    .day-item.done { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.25); }
+    .check-circle { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #059669; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .day-item.done .check-circle { background: #22c55e; border-color: #22c55e; }
+    .day-info { flex: 1; min-width: 0; }
+    .day-num { font-size: 10px; color: #6b7280; }
+    .day-passage { font-size: 14px; font-weight: 700; }
+    .day-item.done .day-passage { text-decoration: line-through; color: rgba(255,255,255,0.35); }
+    .day-title { font-size: 11px; color: #34d399; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .note-badge { font-size: 10px; color: #6b7280; background: rgba(16,185,129,0.2); border-radius: 20px; padding: 2px 8px; white-space: nowrap; flex-shrink: 0; }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .day-header { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+    .day-header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .day-header-meta { font-size: 11px; color: #6b7280; margin-bottom: 4px; }
+    .day-header-title { font-size: 20px; font-weight: 900; }
+    .day-header-passage { font-size: 13px; color: #34d399; margin-top: 2px; }
+    .done-btn { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; border: 1.5px solid #059669; color: #34d399; background: transparent; cursor: pointer; white-space: nowrap; flex-shrink: 0; margin-left: 10px; }
+    .done-btn.is-done { background: #22c55e; border-color: #22c55e; color: white; }
+    .day-focus { font-size: 13px; color: #d1fae5; line-height: 1.6; margin-top: 12px; }
+
+    .section-card { border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+    .section-card.teaching  { background: rgba(6,78,59,0.3); border: 1px solid rgba(16,185,129,0.3); }
+    .section-card.verses    { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+    .section-card.questions { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+    .section-card.notes     { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+    .section-card.ai        { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+    .section-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #34d399; margin-bottom: 12px; }
+    .teaching-para { font-size: 13px; color: rgba(255,255,255,0.88); line-height: 1.7; margin-bottom: 10px; }
+    .teaching-para:last-child { margin-bottom: 0; }
+    .verse-item { background: rgba(16,185,129,0.12); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-size: 13px; color: #d1fae5; font-style: italic; line-height: 1.5; }
+    .verse-item:last-child { margin-bottom: 0; }
+    .question-item { display: flex; gap: 10px; margin-bottom: 10px; }
+    .question-item:last-child { margin-bottom: 0; }
+    .q-num { width: 22px; height: 22px; border-radius: 50%; background: #059669; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; margin-top: 1px; }
+    .q-text { font-size: 13px; color: #d1fae5; line-height: 1.6; }
+
+    .note-entry { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+    .note-text { font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.6; }
+    .note-meta { font-size: 10px; color: #6b7280; margin-top: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .note-delete { background: none; border: none; color: #ef4444; font-size: 14px; cursor: pointer; padding: 0; }
+    .confirm-delete { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 8px 10px; margin-top: 6px; display: flex; align-items: center; gap: 8px; }
+    .confirm-delete span { font-size: 12px; color: #fca5a5; flex: 1; }
+    .confirm-yes { background: #ef4444; border: none; border-radius: 6px; color: white; font-size: 11px; font-weight: 700; padding: 4px 10px; cursor: pointer; }
+    .confirm-no  { background: rgba(255,255,255,0.08); border: none; border-radius: 6px; color: #9ca3af; font-size: 11px; padding: 4px 10px; cursor: pointer; }
+    textarea { width: 100%; background: rgba(10,10,26,0.8); border: 1px solid rgba(16,185,129,0.4); border-radius: 10px; padding: 12px; font-size: 13px; color: white; font-family: system-ui, sans-serif; resize: none; outline: none; margin-top: 4px; }
+    textarea:focus { border-color: #10b981; }
+    .save-note-btn { width: 100%; margin-top: 8px; padding: 10px; background: #059669; border: none; border-radius: 10px; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .save-note-btn:hover { background: #10b981; }
+
+    .ai-btn { padding: 6px 14px; background: #059669; border: none; border-radius: 20px; color: white; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .ai-btn:disabled { opacity: 0.5; cursor: default; }
+    .ai-result { font-size: 13px; color: #d1fae5; line-height: 1.7; margin-top: 10px; }
+    .ai-placeholder { font-size: 13px; color: #4b5563; font-style: italic; }
+
+    .history-entry { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+    .history-day-link { font-size: 11px; color: #34d399; font-weight: 700; cursor: pointer; margin-bottom: 6px; }
+    .history-day-link:hover { color: white; }
+    .history-note-text { font-size: 13px; color: rgba(255,255,255,0.88); line-height: 1.6; }
+    .history-note-date { font-size: 10px; color: #6b7280; margin-top: 4px; }
+
+    .day-nav { display: flex; gap: 10px; margin-top: 4px; }
+    .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .nav-prev { background: rgba(255,255,255,0.08); color: #9ca3af; }
+    .nav-prev:hover { background: rgba(255,255,255,0.12); }
+    .nav-next { background: #059669; color: white; }
+    .nav-next:hover { background: #10b981; }
+
+    .empty-state { text-align: center; color: #4b5563; padding: 40px 0; font-size: 13px; }
+    .empty-state .e-icon { font-size: 36px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<!-- LIST VIEW -->
+<div id="viewList" class="view active">
+  <a class="back-btn" href="../index.html">← Bible Study Hub</a>
+  <div class="plan-header">
+    <div class="icon">🌍</div>
+    <h1>Genesis — In the Beginning</h1>
+    <p>25 days through the foundation of everything</p>
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="progress-label" id="progressLabel">0 / 25 days completed</div>
+    </div>
+  </div>
+  <button class="notes-btn" onclick="showHistory()">
+    <span>📝 Notes History</span>
+    <span id="notesCount" style="font-size:11px;color:#6b7280;">0 notes ›</span>
+  </button>
+  <div id="dayList"></div>
+</div>
+
+<!-- DAY VIEW -->
+<div id="viewDay" class="view">
+  <a class="back-btn" href="#" onclick="showList();return false;">← All Days</a>
+  <div class="day-header">
+    <div class="day-header-top">
+      <div>
+        <div class="day-header-meta" id="dayMeta"></div>
+        <div class="day-header-title" id="dayTitle"></div>
+        <div class="day-header-passage" id="dayPassage"></div>
+      </div>
+      <button class="done-btn" id="doneBtn" onclick="toggleDone()"></button>
+    </div>
+    <div class="day-focus" id="dayFocus"></div>
+  </div>
+  <div class="section-card teaching">
+    <div class="section-label">📖 Teaching</div>
+    <div id="dayTeaching"></div>
+  </div>
+  <div class="section-card verses">
+    <div class="section-label">🔑 Key Verses</div>
+    <div id="dayVerses"></div>
+  </div>
+  <div class="section-card questions">
+    <div class="section-label">🤔 Study Questions</div>
+    <div id="dayQuestions"></div>
+  </div>
+  <div class="section-card notes">
+    <div class="section-label">✍️ My Notes</div>
+    <div id="notesList"></div>
+    <textarea id="noteInput" rows="3" placeholder="Write your thoughts, answers, or what God is showing you..."></textarea>
+    <button class="save-note-btn" onclick="saveNote()">Save Note</button>
+  </div>
+  <div class="section-card ai">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <div class="section-label" style="margin-bottom:0;">✨ Deeper AI Insight</div>
+      <button class="ai-btn" id="aiBtn" onclick="getInsight()">Get Insight</button>
+    </div>
+    <div id="aiResult"><div class="ai-placeholder">Tap "Get Insight" for cross-references, historical context & extra commentary.</div></div>
+  </div>
+  <div class="day-nav">
+    <button class="nav-btn nav-prev" id="prevBtn" onclick="navDay(-1)">← Previous</button>
+    <button class="nav-btn nav-next" id="nextBtn" onclick="navDay(1)">Next Day →</button>
+  </div>
+</div>
+
+<!-- HISTORY VIEW -->
+<div id="viewHistory" class="view">
+  <a class="back-btn" href="#" onclick="showList();return false;">← All Days</a>
+  <h2 style="font-size:18px;font-weight:900;margin-bottom:4px;">📝 Notes History</h2>
+  <p style="font-size:12px;color:#6b7280;margin-bottom:18px;" id="historySubtitle"></p>
+  <div id="historyList"></div>
+</div>
+
+<script>
+var PLAN = {
+  name: "Genesis — In the Beginning",
+  storageKey: "genesis-plan-v1",
+  days: [
+    {day:1,passage:"Genesis 1",title:"In the Beginning God",focus:"Before anything existed, God was. Genesis 1 is not primarily a science textbook — it is a theological declaration about who made everything and why.",teaching:"Genesis 1 opens with the most important sentence ever written: 'In the beginning God created the heavens and the earth.' Every word matters. 'In the beginning' — time had a start. 'God' — a personal Being existed before time. 'Created' — He brought something from nothing. This is not a story competing with science — it is a story about who is behind everything science studies.\n\nThe structure of the six days is carefully organized: Days 1–3 create realms (light, sea/sky, land), and Days 4–6 fill them with rulers (sun/moon, birds/fish, animals/humans). Day 7 — the Sabbath — is the only day God blesses. Rest is not the absence of work. It is the goal of work.\n\nThe phrase 'God saw that it was good' appears 7 times — a complete number. God delights in His creation. He is not a distant clockmaker who wound up the universe and stepped back. He is a Creator who looks at what He made and finds it good.",keyVerses:["Genesis 1:1 — In the beginning God created the heavens and the earth.","Genesis 1:27 — So God created mankind in his own image, in the image of God he created them; male and female he created them.","Genesis 1:31 — God saw all that he had made, and it was very good."],questions:["What does it mean that God created everything 'out of nothing'? How does that establish His authority over your life?","You are made in the image of God — not angels, not animals, but God. How should that change how you see yourself and every other person?","God rested on Day 7 — not because He was tired, but to model something. What is God teaching you about rest?"]},
+    {day:2,passage:"Genesis 2",title:"The Garden and the Gift of Relationship",focus:"God zooms in on Day 6. He forms man personally, plants a garden, and brings woman from man's side. This chapter is about intimacy — between God and humanity, and between people.",teaching:"Genesis 2 is not a contradiction of Genesis 1 — it is a close-up. Chapter 1 gives the wide-angle view of creation week. Chapter 2 zooms into the creation of humanity and the environment God prepared for them.\n\nGod forms Adam 'from the dust of the ground' and breathes into his nostrils the breath of life (2:7). This is the most intimate act of creation in the whole chapter. Every other creature is simply spoken into existence. Adam is formed by hand and kissed into being. The Hebrew word for 'breath' (neshamah) is used almost exclusively of God Himself — something of God's own life is breathed into humanity.\n\nWoman is created from Adam's rib — the Hebrew word is more accurately 'side.' Not created from his head (to be superior), or his feet (to be inferior), but from his side — to stand beside him as an equal partner. Adam's response in 2:23 is the first poem in the Bible: 'This is now bone of my bones and flesh of my flesh.' It is a cry of recognition and delight.",keyVerses:["Genesis 2:7 — Then the LORD God formed a man from the dust of the ground and breathed into his nostrils the breath of life, and the man became a living being.","Genesis 2:18 — The LORD God said, 'It is not good for the man to be alone. I will make a helper suitable for him.'","Genesis 2:24 — That is why a man leaves his father and mother and is united to his wife, and they become one flesh."],questions:["God breathed His own breath into Adam. What does it mean that your life is sustained by something that came directly from God?","'It is not good for the man to be alone' — God designed us for relationship. Where are you currently isolated, and what would it look like to move toward community?","Adam's first words were a poem of delight about Eve. What relationships in your life call for more intentional delight and gratitude?"]},
+    {day:3,passage:"Genesis 3",title:"The Fall — Everything Changes",focus:"The most consequential chapter in the Bible after Genesis 1. Sin enters the world. Shame, blame, and death follow. But so does the first promise of rescue.",teaching:"Genesis 3 explains why everything is broken. Before this chapter: no shame, no hiding, no pain, no death, no conflict. After this chapter: all of it. The entire human experience of suffering, guilt, and mortality traces back here.\n\nThe serpent's strategy is still the same strategy used today: question God's Word ('Did God really say?'), deny God's judgment ('You will not surely die'), and offer autonomy ('You will be like God'). Eve doesn't just eat — she considers, deliberates, and chooses. Sin is never an accident.\n\nAfter the fall, Adam and Eve hide from God — the first time in history. God's response is not 'Where are you?' because He doesn't know. It is the invitation of a grieving Father giving His children a chance to come out. Then God does something remarkable in the middle of judgment (3:21): He kills an animal and makes clothing for them. The first death in Scripture covers human shame. This pattern — blood covering guilt — runs all the way to the cross.\n\nGenesis 3:15 is called the 'protoevangelium' — the first gospel. The seed of the woman will crush the serpent's head. This is the first promise of a Savior, 4,000 years before Jesus was born.",keyVerses:["Genesis 3:1 — Now the serpent was more crafty than any of the wild animals the LORD God had made. He said to the woman, 'Did God really say...'","Genesis 3:15 — I will put enmity between you and the woman, and between your offspring and hers; he will crush your head, and you will strike his heel.","Genesis 3:21 — The LORD God made garments of skin for Adam and his wife and clothed them."],questions:["The serpent's first move was to question God's Word. Where in your life are you most vulnerable to doubting what God has said?","Adam blamed Eve, Eve blamed the serpent — nobody took responsibility. Where do you tend to deflect blame rather than own your choices?","Even in judgment God covered their shame. Where do you need God to cover something you are ashamed of today?"]},
+    {day:4,passage:"Genesis 4–5",title:"Cain, Abel, and the Line of Promise",focus:"The first murder in history. Sin escalates rapidly outside the garden. Yet God preserves a line of people who 'call on the name of the LORD.'",teaching:"Cain and Abel bring offerings to God. God accepts Abel's and rejects Cain's — not arbitrarily, but because of the heart behind the offering. Hebrews 11:4 says Abel offered his gift 'by faith.' Before the murder, God gives Cain a chance: 'Why are you angry? If you do what is right, will you not be accepted?' (4:7). The door is open. Cain chooses to shut it.\n\nGod's warning to Cain is one of the most important descriptions of sin in the Bible: 'Sin is crouching at the door; it desires to have you, but you must rule over it' (4:7). Sin is personified as a predator waiting at the threshold of your will. It desires — it is active, hungry, opportunistic. But Cain can resist it. He chooses not to.\n\nDespite the darkness, Genesis 4 ends with hope: 'At that time people began to call on the name of the LORD' (4:26). Even in a world of murder and vengeance, there are those who turn toward God. Chapter 5 traces the genealogy from Adam to Noah — ten generations. In the middle of death ('and then he died... and then he died'), one man stands out: Enoch, who 'walked faithfully with God; then he was no more, because God took him away' (5:24).",keyVerses:["Genesis 4:7 — Sin is crouching at the door; it desires to have you, but you must rule over it.","Genesis 4:9 — Then the LORD said to Cain, 'Where is your brother Abel?' 'I don't know,' he replied. 'Am I my brother's keeper?'","Genesis 4:26 — At that time people began to call on the name of the LORD."],questions:["God warned Cain before the murder. When God warns you about something — through Scripture, a friend, a conscience — how do you typically respond?","'Am I my brother's keeper?' — Cain's question is still the defining question of society. What does it mean for you to be responsible for the people around you?","Enoch 'walked with God' — two words that summarize a whole life. If two words summarized your walk with God right now, what would they be?"]},
+    {day:5,passage:"Genesis 6–7",title:"Noah — Grace in a Broken World",focus:"The world has become so violent and corrupt that God grieves making it. One man finds grace. The ark is built. The flood comes.",teaching:"Genesis 6:5 contains one of the most sobering verses in the Bible: 'The LORD saw how great the wickedness of the human race had become on the earth, and that every inclination of the thoughts of the human heart was only evil all the time.' This is not hyperbole — it is a diagnosis. Human nature without God's restraint deteriorates completely.\n\nThen verse 6: 'The LORD regretted that he had made human beings on the earth, and his heart was deeply troubled.' Can God regret? The Hebrew word (nacham) means to breathe deeply, to sigh. God is not surprised — He is grieved. There is something in God that is genuinely moved by the moral state of His creation.\n\nVerse 8 is the turning point: 'But Noah found favor (grace) in the eyes of the LORD.' The Hebrew word for favor is the same word used throughout the Old Testament for grace (chen). Noah didn't earn this — he found it. Grace is always found, never achieved.\n\nThe ark's dimensions (300 cubits long, 50 wide, 30 high) give a vessel of extraordinary stability. Naval architects have noted it has near-ideal proportions for surviving rough seas. God's instructions for salvation are not careless — they are precise.",keyVerses:["Genesis 6:5 — Every inclination of the thoughts of the human heart was only evil all the time.","Genesis 6:8 — But Noah found favor in the eyes of the LORD.","Genesis 7:16 — Then the LORD shut him in."],questions:["Genesis 6:5 describes total moral corruption. Do you believe human nature is that broken — and what difference does that belief make?","Noah found grace — he didn't earn it. How does that change how you think about your own standing before God?","God shut the door of the ark. What does it mean that God is the one who secures those He saves?"]},
+    {day:6,passage:"Genesis 8–9",title:"New Beginnings and the First Covenant",focus:"The flood ends. Noah steps onto dry ground. God makes His first formal covenant — with all living creatures — and places a rainbow in the sky as its sign.",teaching:"The waters recede slowly — it takes 150 days for the water to go down after the rain stops. God is not in a hurry. 'God remembered Noah' (8:1) — not that He had forgotten him, but that He turned His active attention toward him. In Hebrew, 'remembering' is always followed by action.\n\nNoah's first act off the ark is worship (8:20). Before he builds a shelter, before he plants a garden, before he does anything for himself — he builds an altar. This is the right order. God responds: 'Never again will I curse the ground because of humans' (8:21).\n\nGenesis 9 contains the first formal covenant in Scripture. God makes it with Noah, his sons, and 'every living creature on earth' (9:10). The rainbow is the sign — a weapon of war (the word for 'bow' is the same used for battle bows) hung up in the sky, pointed away from earth. God is laying down His weapon of judgment. Every rainbow since has been a visible, physical reminder that God keeps His word.\n\nGenesis 9:6 establishes the sanctity of human life with its reason: 'for in the image of God has God made mankind.' The reason murder is wrong is not pragmatic — it is theological. Every human being bears the image of God.",keyVerses:["Genesis 8:1 — But God remembered Noah and all the wild animals and the livestock that were with him in the ark.","Genesis 9:13 — I have set my rainbow in the clouds, and it will be the sign of the covenant between me and the earth.","Genesis 9:6 — Whoever sheds human blood, by humans shall their blood be shed; for in the image of God has God made mankind."],questions:["Noah worshipped before doing anything else after the flood. What would it look like for worship to be your first response, not your last resort?","Every rainbow is a physical sign of God's faithfulness. When did you last pause to let something in creation remind you of a specific promise of God?","The image of God in every human being is the basis for human dignity. How does that change how you treat the most difficult person in your life?"]},
+    {day:7,passage:"Genesis 11–12",title:"Babel and the Call of Abram",focus:"Humanity builds a tower to make a name for themselves. God scatters them. Then He immediately calls one man — Abram — to become the beginning of His rescue plan for all peoples.",teaching:"Genesis 11: Babel is not just about a tower. The people want to 'make a name for ourselves' (11:4) and avoid being scattered — directly contradicting God's command in 9:1 to fill the earth. The problem is not ambition — it is self-centered ambition that pushes God out of the center.\n\nGod's response is not angry destruction — He comes down (11:5), sees what they're doing, and redirects them. The scattering of nations at Babel is the origin of every language, culture, and people group on earth. Acts 2 at Pentecost is the reversal — the Spirit enables everyone to hear in their own language. What Babel divided, the gospel reunites.\n\nGenesis 12 is one of the most important passages in the Bible. God calls Abram — an idol worshipper from Ur of the Chaldeans — and makes seven promises: a land, a great nation, a great name, personal blessing, blessing to those who bless him, cursing to those who curse him, and 'all peoples on earth will be blessed through you' (12:3). That last promise is the gospel in embryo. Paul quotes it in Galatians 3:8 and says it was 'the gospel announced in advance.' Every nation in history will be blessed through this one man's descendants — through Jesus.",keyVerses:["Genesis 11:4 — Come, let us build ourselves a city, with a tower that reaches to the heavens, so that we may make a name for ourselves.","Genesis 12:1 — The LORD had said to Abram, 'Go from your country, your people and your father's household to the land I will show you.'","Genesis 12:3 — All peoples on earth will be blessed through you."],questions:["The sin at Babel was making a name for themselves. What areas of your life are more about your name and reputation than God's?","God called Abram to leave everything — family, culture, home — with no map and no timeline. What is God calling you to step out toward in faith right now?","'All peoples on earth will be blessed through you' — this promise has been fulfilled in Jesus. How does knowing you are part of that global story change your sense of purpose?"]},
+    {day:8,passage:"Genesis 13–14",title:"Abram and Lot — Generosity and the Mysterious Priest",focus:"Abram gives Lot the first choice of land — an act of extraordinary generosity. Then he meets Melchizedek, one of the most mysterious figures in the Bible.",teaching:"After returning from Egypt, Abram and Lot's herdsmen begin to quarrel over land. Abram's response is remarkable — as the elder, he had the right to choose first. Instead he gives Lot the first choice: 'Let's not have any quarreling between you and me... Is not the whole land before you? Let's part company' (13:8–9). When Lot chooses the well-watered plain of Jordan (toward Sodom), God immediately reaffirms His promise to Abram. Generosity does not result in loss — it results in receiving God's full attention.\n\nGenesis 14 contains one of the most mysterious figures in the entire Bible: Melchizedek, king of Salem and 'priest of God Most High' (14:18). He appears from nowhere, brings bread and wine, blesses Abram, and disappears. He is never mentioned again in Genesis. But Psalm 110:4 says the coming Messiah will be 'a priest forever, in the order of Melchizedek.' Hebrews 5–7 develops this at length — Jesus' priesthood is not based on the Levitical line but on the eternal, mysterious order of Melchizedek.\n\nAbram's response to the king of Sodom is equally striking: he refuses to take anything. 'I will not take a thread or the strap of a sandal... so that you will never be able to say, I made Abram rich' (14:23). He will not allow any human king to claim credit for what God will give him.",keyVerses:["Genesis 13:8–9 — Let's not have any quarreling between you and me... Is not the whole land before you? Let's part company.","Genesis 14:18–19 — Then Melchizedek king of Salem brought out bread and wine. He was priest of God Most High, and he blessed Abram.","Genesis 14:23 — I will not take a thread or the strap of a sandal or anything that is yours, so that you will never be able to say, 'I made Abram rich.'"],questions:["Abram gave up his rights for peace. Is there a relationship where God is calling you to give up your 'right' to something for the sake of unity?","Abram refused to let the king of Sodom take credit for his blessing. Are you careful about who you allow to have influence over your provision and security?","Melchizedek brings bread and wine and blesses Abram. How do you see Jesus in this encounter — and what does it tell you about who Jesus is?"]},
+    {day:9,passage:"Genesis 15–16",title:"The Covenant and Hagar",focus:"God makes a binding covenant with Abram by walking through the sacrifice alone. Then Sarai's plan to 'help God' through Hagar shows what happens when we take matters into our own hands.",teaching:"Genesis 15 is one of the most dramatic scenes in the entire Bible. Abram asks God how he can know God will keep His promise about land and descendants. God's answer is to enact an ancient covenant ceremony: animals are split in two, and the parties walk between them, declaring 'may I become like these animals if I break my promise.'\n\nBut in verse 17, something extraordinary happens. God puts Abram into a deep sleep and only God — as a smoking firepot and blazing torch — walks between the pieces. Abram does not walk. God takes both sides of the covenant on Himself. This is unconditional grace: the covenant's fulfillment depends entirely on God, not on Abram's faithfulness. This is the foundation of the gospel.\n\nGenesis 16: Ten years pass after the promise of a son. Sarai is still barren. She proposes a common ancient Near Eastern practice — giving her servant Hagar to Abram as a surrogate. Abram agrees. The result is Ishmael — and generations of conflict. When we grow tired of waiting for God's timing and manufacture our own solution, we create problems that outlast us. Yet even in this mess, God finds Hagar in the wilderness and speaks to her: 'You are the God who sees me' (16:13). God's grace reaches even the collateral damage of our impatience.",keyVerses:["Genesis 15:6 — Abram believed the LORD, and he credited it to him as righteousness.","Genesis 15:17 — A smoking firepot with a blazing torch appeared and passed between the pieces.","Genesis 16:13 — She gave this name to the LORD who spoke to her: 'You are the God who sees me.'"],questions:["God took both sides of the covenant. What does it mean that your relationship with God ultimately depends on His faithfulness, not yours?","'You are the God who sees me' — Hagar said this in a wilderness, abandoned and frightened. Where do you need to know that God sees you right now?","Sarai tried to help God's plan along and created lasting harm. Is there a promise of God you are trying to manufacture rather than wait for?"]},
+    {day:10,passage:"Genesis 17–18",title:"New Names and the Promise of a Son",focus:"God changes Abram and Sarai's names and reconfirms the covenant. Then three mysterious visitors arrive and announce: 'This time next year, Sarah will have a son.'",teaching:"Genesis 17: Abram is now 99 years old — 24 years after the first promise of a son. God appears and introduces Himself as 'El Shaddai' (God Almighty) and reaffirms the covenant. As a sign of the covenant's new stage, He changes Abram's name to Abraham ('father of many nations') and Sarai's name to Sarah ('princess'). In the ancient world, renaming someone signified a change in identity and destiny. God is not just predicting — He is declaring.\n\nAbraham falls facedown and laughs (17:17) — not mockingly, but with the shocked, unbelieving joy of someone who can barely take in what they're hearing. God's response is not rebuke but affirmation: 'Yes, but your wife Sarah will bear you a son, and you will call him Isaac' — the name means 'he laughs.'\n\nGenesis 18: Three visitors arrive. One is the LORD Himself. Abraham runs to meet them, bows, washes their feet, and prepares a meal — not knowing who they are. The promise is repeated: 'This time next year Sarah will have a son.' Sarah, listening at the tent entrance, laughs. The LORD hears it and asks: 'Is anything too hard for the LORD?' — one of the most important questions in all Scripture.",keyVerses:["Genesis 17:5 — No longer will you be called Abram; your name will be Abraham, for I have made you a father of many nations.","Genesis 18:10 — I will surely return to you about this time next year, and Sarah your wife will have a son.","Genesis 18:14 — Is anything too hard for the LORD?"],questions:["God renamed Abraham and Sarah — new identity for a new calling. Has God given you a new identity through faith? How well do you live in that identity?","'Is anything too hard for the LORD?' — what situation in your life feels impossible right now? Bring it to that question.","Abraham extended generous hospitality to strangers who turned out to be God Himself. How does that change how you treat unexpected people who enter your life?"]},
+    {day:11,passage:"Genesis 19–20",title:"Sodom and Abraham's Intercession",focus:"Before destroying Sodom, God tells Abraham — because Abraham is His friend. Abraham intercedes boldly for the city. Lot is rescued. God's justice and mercy are both on display.",teaching:"Genesis 18:17 contains a remarkable statement: 'Shall I hide from Abraham what I am about to do?' God treats Abraham as a friend who deserves to know His plans. Then Abraham does something extraordinary — he intercedes for Sodom, a city he knows is wicked, negotiating with God from 50 righteous people down to 10. This is not Abraham manipulating God — it is Abraham understanding God's character well enough to appeal to it. 'Will not the Judge of all the earth do right?' (18:25).\n\nThe angels arrive in Sodom and Lot shows the same hospitality Abraham showed — he insists they come inside. The men of Sodom surround the house, demanding the visitors be handed over for sexual violence. The sin of Sodom is not simply sexual — it is the complete breakdown of the most basic social obligation: protection of the vulnerable stranger.\n\nLot's rescue is theologically important. He is not a great man — he has been compromised by his proximity to Sodom for years. Yet 2 Peter 2:7 calls him 'a righteous man, who was distressed by the depraved conduct of the lawless.' God rescues him not because of his quality, but because of His mercy and because of Abraham's intercession. Grace always outruns our expectations.",keyVerses:["Genesis 18:17 — Then the LORD said, 'Shall I hide from Abraham what I am about to do?'","Genesis 18:25 — Will not the Judge of all the earth do right?","Genesis 19:29 — So when God destroyed the cities of the plain, he remembered Abraham, and he brought Lot out of the catastrophe."],questions:["Abraham boldly interceded for a wicked city. Who are you interceding for — and are you as bold and persistent in that intercession as Abraham was?","'Will not the Judge of all the earth do right?' — this is the foundation of trust in God during injustice. Where do you need to anchor yourself in God's ultimate justice?","Lot was rescued partly because God 'remembered Abraham.' Whose prayers do you think have been protecting you — and are you praying for others the same way?"]},
+    {day:12,passage:"Genesis 21–22",title:"Isaac and the Greatest Test",focus:"The promised son is born — finally. Then God asks Abraham to give him back. Genesis 22 is the most dramatic chapter in Genesis and the richest picture of the gospel in the entire Old Testament.",teaching:"Genesis 21: After 25 years of waiting, Isaac is born. Sarah says: 'God has brought me laughter, and everyone who hears about this will laugh with me' (21:6). The laughter of disbelief (17:17, 18:12) has become the laughter of fulfilled promise. God keeps His word — always, but in His timing.\n\nGenesis 22 is called the Akedah — the Binding — in Jewish tradition. It is read every year on the Jewish New Year as the greatest test a human being ever faced. God asks Abraham to sacrifice his 'only son, whom you love' — Isaac. Every word is carefully chosen. The description 'your son, your only son, whom you love, Isaac' echoes in John 3:16: 'his one and only Son.'\n\nThe parallels to the crucifixion are precise and deliberate: Isaac carries the wood up the mountain (Jesus carries His cross). The ram is caught in thorns (Jesus wears a crown of thorns). The father and son walk together (God and Jesus go to the cross together). Abraham names the place 'The LORD Will Provide' — and adds: 'On the mountain of the LORD it will be provided.' This is almost certainly a reference to Mount Moriah — which is where Jerusalem, and ultimately the Temple, would be built. The place where God stopped Abraham's hand is the same region where God did not stop His own.",keyVerses:["Genesis 21:6 — Sarah said, 'God has brought me laughter, and everyone who hears about this will laugh with me.'","Genesis 22:2 — Then God said, 'Take your son, your only son, whom you love — Isaac — and go to the region of Moriah.'","Genesis 22:14 — So Abraham called that place The LORD Will Provide. And to this day it is said, 'On the mountain of the LORD it will be provided.'"],questions:["Abraham waited 25 years for Isaac. Is there a promise of God you have been waiting for that you have nearly given up on? What does Isaac's birth say to you?","God asked Abraham to give back the very thing he had waited longest for. Is there something God is asking you to hold loosely — or give back to Him?","Walk through the parallels between Genesis 22 and the crucifixion. What detail moves you most, and why?"]},
+    {day:13,passage:"Genesis 24–25",title:"A Wife for Isaac and the Birthright",focus:"Abraham sends his servant to find a wife for Isaac — a beautiful story of providence and prayer. Then Jacob and Esau are born, and the birthright is despised for a bowl of stew.",teaching:"Genesis 24 is the longest chapter in Genesis — and it is entirely about finding a wife for Isaac. This detail reveals something important: marriage is not a minor subplot in Genesis, it is a central concern. The servant's prayer at the well (24:12–14) is one of the most specific and trusting prayers in Scripture — and God answers it before the prayer is even finished (24:15).\n\nThe servant's repeated phrase throughout the chapter is 'the LORD has led me' (24:27, 48). He is a model of recognizing God's hand in the details of ordinary life. When asked if he will stay for a feast before traveling, he says: 'Do not detain me, since the LORD has granted success to my journey' (24:56). There is an urgency to aligning with what God is doing.\n\nGenesis 25 introduces Jacob and Esau — twins who struggle in the womb and continue struggling throughout their lives. Esau comes home hungry from hunting and sells his birthright for a bowl of red stew. Hebrews 12:16 calls him 'godless' for this — not because of the stew, but because of what it revealed: he 'despised his birthright.' He traded his eternal inheritance for immediate physical satisfaction. This is one of the saddest transactions in the Bible — and one of the most common.",keyVerses:["Genesis 24:27 — He said, 'Praise be to the LORD, the God of my master Abraham, who has not abandoned his kindness and faithfulness to my master.'","Genesis 25:22 — The babies jostled each other within her, and she said, 'Why is this happening to me?' So she went to inquire of the LORD.","Genesis 25:34 — So Esau despised his birthright."],questions:["The servant saw God's hand in every detail of his journey. How intentional are you about recognizing God's providence in the ordinary moments of your day?","Esau traded his birthright for immediate comfort. What 'birthright' — calling, integrity, relationship with God — are you in danger of trading for short-term relief?","Rebekah went to 'inquire of the LORD' when confused about her pregnancy. What difficult situation are you in right now that needs to be brought directly to God?"]},
+    {day:14,passage:"Genesis 27–28",title:"Jacob's Deception and the Ladder to Heaven",focus:"Jacob deceives his father and steals Esau's blessing. He flees for his life — and God meets him in a dream at Bethel with a stairway reaching to heaven.",teaching:"Genesis 27 is deeply uncomfortable — the patriarch Jacob secures the covenant blessing through outright deception, and his mother is the architect of the plan. Isaac is blind and dying. Rebekah dresses Jacob in Esau's clothes and prepares goat stew to mimic Esau's hunting. Jacob lies directly to his father's face three times.\n\nYet God works through this broken situation. The blessing given to Jacob — though obtained deceptively — stands. This does not mean God endorses deception. It means God is not stopped by human failure. His purposes move forward even through our worst decisions. The consequences, however, are severe: Jacob must flee from the brother who wants to kill him and will not see his mother again before she dies.\n\nGenesis 28: On the run, alone, using a stone for a pillow, Jacob dreams of a stairway reaching from earth to heaven with angels ascending and descending. At the top, God reaffirms the Abrahamic covenant to this deceiver, this fugitive: 'I am with you and will watch over you wherever you go' (28:15). Jacob's response is awe mixed with fear: 'Surely the LORD is in this place, and I was not aware of it' (28:16). Jesus references this passage in John 1:51 when He tells Nathanael he will 'see heaven open and the angels of God ascending and descending on the Son of Man.' Jesus is the true ladder between heaven and earth.",keyVerses:["Genesis 27:20 — Jacob said to his father, 'The LORD your God gave me success.'","Genesis 28:15 — I am with you and will watch over you wherever you go, and I will bring you back to this land.","Genesis 28:16 — Surely the LORD is in this place, and I was not aware of it."],questions:["God worked through Jacob's deception — not because He approved of it, but because He couldn't be stopped. What does this say about God's sovereignty over your worst decisions?","'Surely the LORD is in this place, and I was not aware of it' — where might God be present in your life right now that you have not recognized?","Jesus said He is the true ladder between heaven and earth. What does it mean that you have direct access to God through Jesus — no stairway, no climbing required?"]},
+    {day:15,passage:"Genesis 29–30",title:"Jacob, Leah, and Rachel — Love, Rivalry, and God's Provision",focus:"Jacob works 14 years for Rachel. Leah is unloved. But God sees Leah — and the twelve sons born from this complicated family will become the twelve tribes of Israel.",teaching:"Jacob arrives at his uncle Laban's house and immediately falls in love with Rachel — beautiful, shepherding her father's flocks. He agrees to work seven years for her, and the years 'seemed like only a few days to him because of his love for her' (29:20) — one of the most romantic lines in Scripture.\n\nThen Laban deceives him. On the morning after the wedding feast, Jacob discovers he has married Leah, not Rachel. The deceiver has been deceived — with the same method he used on his own father. God's justice works itself out through natural consequences.\n\nLeah is unloved — but 'when the LORD saw that Leah was not loved, he opened her womb' (29:31). Four times in succession God opens Leah's womb while Rachel remains barren. Leah names her sons in ways that trace her spiritual journey: Reuben ('he has seen my misery'), Simeon ('he heard'), Levi ('attached'), Judah ('praise'). By Judah, she has stopped begging for Jacob's love and turned to praising God. This is one of the most quietly powerful character arcs in Genesis. And it is through Leah's son Judah — not Rachel's son Joseph — that the line to Jesus runs (Matthew 1:2–3).",keyVerses:["Genesis 29:20 — So Jacob served seven years to get Rachel, but they seemed like only a few days to him because of his love for her.","Genesis 29:31 — When the LORD saw that Leah was not loved, he opened her womb, but Rachel remained childless.","Genesis 29:35 — She conceived again, and when she gave birth to a son she said, 'This time I will praise the LORD.' So she named him Judah."],questions:["God saw that Leah was unloved and responded with grace. Who in your life is the 'Leah' — overlooked, undervalued — that God is asking you to see?","Leah's journey ends in praise (Judah) after beginning in longing for human love. Is there an area where you need to stop seeking validation from people and turn it into praise to God?","Jacob loved Rachel passionately for seven years before even marrying her. How does that picture speak to perseverance and longing — whether for a person, a dream, or God Himself?"]},
+    {day:16,passage:"Genesis 32–33",title:"Wrestling with God and Reconciliation with Esau",focus:"Jacob spends a night alone wrestling with a mysterious stranger — and is never the same. Then he meets the brother he wronged twenty years ago.",teaching:"Genesis 32 is one of the strangest and most profound passages in the Bible. The night before his terrifying reunion with Esau, Jacob is alone — and 'a man' wrestles with him until dawn. The 'man' cannot overpower Jacob despite being divine — Jacob clings on. The man dislocates Jacob's hip with a touch, showing He could have ended the struggle at any moment. Then He blesses Jacob and changes his name: 'Your name will no longer be Jacob (deceiver) but Israel — because you have struggled with God and with humans and have overcome.'\n\nJacob names the place Peniel: 'I saw God face to face, and yet my life was spared' (32:30). Jacob — the deceiver, the manipulator, the man who ran from God and from his brother for twenty years — has finally stopped running. The limp he carries afterward is a permanent mark of this encounter. He walked differently for the rest of his life.\n\nThe reunion with Esau (Genesis 33) is deeply moving. Jacob bows seven times, expecting anger. Esau runs to meet him, embraces him, throws his arms around his neck, and weeps. Jacob says: 'To see your face is like seeing the face of God' (33:10). Twenty years of guilt, fear, and separation — resolved by a brother who chose to forgive.",keyVerses:["Genesis 32:26 — Then the man said, 'Let me go, for it is daybreak.' But Jacob replied, 'I will not let you go unless you bless me.'","Genesis 32:28 — Your name will no longer be Jacob, but Israel, because you have struggled with God and with humans and have overcome.","Genesis 33:10 — To see your face is like seeing the face of God, now that you have received me favorably."],questions:["Jacob refused to let go of God until he received a blessing. How persistent are you in prayer — especially when you feel like you're wrestling rather than worshipping?","Jacob walked with a limp after his encounter with God. What has your deepest encounter with God cost you — and what did you gain?","Esau ran to embrace the brother who had wronged him. Is there someone you need to run toward in forgiveness rather than waiting for them to come to you?"]},
+    {day:17,passage:"Genesis 37",title:"Joseph — Favored, Hated, Sold",focus:"Jacob's favoritism fuels his brothers' jealousy until it becomes murderous. Joseph is thrown into a pit and sold to slave traders for twenty pieces of silver.",teaching:"Genesis 37 introduces Joseph — the eleventh of Jacob's twelve sons, the firstborn of his beloved Rachel. Jacob makes no secret of his favoritism: he gives Joseph an 'ornate robe' (traditionally translated 'coat of many colors') that sets him apart from his brothers.\n\nJoseph also has two dreams in which his brothers and parents bow down to him. He tells both dreams — to his brothers, then to his father. Whether this was naivety or a kind of spiritual confidence, we don't know. But the dreams are genuinely from God — they will come true years later.\n\nThe brothers' hatred is cold and premeditated. They see Joseph coming and say 'Here comes that dreamer' (37:19). They throw him into a pit, sit down to eat, then sell him to Midianite traders for twenty pieces of silver — the price of a slave. They dip his coat in goat's blood and bring it to their father. Jacob, who once used a goat to deceive his own father, is now deceived by his sons using a goat.\n\nThe New Testament connection is deliberate: Judas betrayed Jesus for thirty pieces of silver. Both Joseph and Jesus were betrayed by their own, sold for silver, and ultimately became the means of saving the very people who rejected them.",keyVerses:["Genesis 37:4 — When his brothers saw that their father loved him more than any of them, they hated him and could not speak a kind word to him.","Genesis 37:19–20 — 'Here comes that dreamer!' they said to each other. 'Come now, let's kill him...'","Genesis 37:28 — So when the Midianite merchants came by, his brothers pulled Joseph up out of the cistern and sold him for twenty shekels of silver to the Ishmaelites."],questions:["Jacob's favoritism destroyed his family. Are there ways your preferences or treatment of people are creating unnecessary division or resentment?","The brothers hated Joseph partly because of his dreams — his sense of calling and destiny. Have you experienced opposition because of what God has put in you?","Joseph was sold by his own family. Jesus was betrayed by one of His own. What does it tell you about the nature of God's rescue plan that it often runs through betrayal?"]},
+    {day:18,passage:"Genesis 39–40",title:"Joseph in Egypt — The LORD Was With Him",focus:"Joseph is falsely accused and imprisoned. In every circumstance — slave, prisoner — the text repeats the same phrase: 'the LORD was with Joseph.'",teaching:"Genesis 39 opens with Joseph as a slave in Potiphar's house — and immediately: 'The LORD was with Joseph so that he prospered' (39:2). Four times in this chapter, some form of 'the LORD was with Joseph' appears. This is the theological key to the whole story. Success is not the evidence of God's presence — Joseph's prosperity is. But even more remarkable is what follows.\n\nPotiphar's wife attempts to seduce Joseph day after day. His refusal is based on loyalty — to his master, and to God: 'How then could I do such a wicked thing and sin against God?' (39:9). When she grabs his cloak, he runs. He leaves his cloak — his reputation, his comfort, his safety — rather than leave his integrity.\n\nHe is thrown in prison on a false charge. And again: 'The LORD was with him; he showed him kindness' (39:21). Prison and the presence of God are not mutually exclusive. Then Genesis 40: two of Pharaoh's officials have dreams. Joseph interprets them accurately — the cupbearer will be restored, the baker will be executed. Joseph asks the cupbearer to remember him. The cupbearer forgets. Two more years in prison. God's timing runs on a calendar we cannot see.",keyVerses:["Genesis 39:2 — The LORD was with Joseph so that he prospered, and he lived in the house of his Egyptian master.","Genesis 39:9 — How then could I do such a wicked thing and sin against God?","Genesis 39:21 — The LORD was with him; he showed him kindness and granted him favor in the eyes of the prison warden."],questions:["'The LORD was with Joseph' in slavery and in prison. Where in your life do you most need to believe that God's presence is not conditional on your circumstances?","Joseph fled from Potiphar's wife — literally ran. What situation in your life requires running away rather than standing your ground to resist?","Joseph interpreted the cupbearer's dream and asked to be remembered — then was forgotten for two years. How do you handle doing the right thing and getting nothing in return?"]},
+    {day:19,passage:"Genesis 41",title:"From Prison to Palace",focus:"Pharaoh dreams. No one can interpret it. The cupbearer remembers Joseph. In a single day, Joseph goes from prisoner to second-in-command of Egypt — and he is thirty years old.",teaching:"Two years after the cupbearer is restored, Pharaoh has two disturbing dreams that none of his wise men can interpret. The cupbearer finally remembers Joseph — not out of gratitude but out of convenience. God's timing is not dependent on people's faithfulness.\n\nJoseph is brought from prison, shaved, and given clean clothes — a complete transformation in one morning. Pharaoh tells him his dreams, and Joseph interprets them: seven years of abundance followed by seven years of famine. Then Joseph does something unexpected — he immediately tells Pharaoh what to do about it. He doesn't just interpret — he advises. And Pharaoh recognizes something in him: 'Can we find anyone like this man, one in whom is the spirit of God?' (41:38).\n\nJoseph is given Pharaoh's signet ring, fine linen, a gold chain, the second chariot in Egypt, a wife, and the name Zaphenath-Paneah. He is thirty years old — thirteen years after being sold by his brothers at seventeen. Thirteen years of slavery and imprisonment. Then, in one day: everything changes. God's promotions are sudden. His preparation is long.",keyVerses:["Genesis 41:16 — 'I cannot do it,' Joseph replied to Pharaoh, 'but God will give Pharaoh the answer he desires.'","Genesis 41:38 — So Pharaoh asked them, 'Can we find anyone like this man, one in whom is the spirit of God?'","Genesis 41:52 — The second son he named Ephraim and said, 'It is because God has made me fruitful in the land of my suffering.'"],questions:["Joseph said 'I cannot — but God will.' How well do you acknowledge your own limitations and God's sufficiency when you are put in high-pressure situations?","'God has made me fruitful in the land of my suffering' — Joseph named his son after his suffering, but with gratitude. What fruit has come from your hardest season?","Thirteen years of preparation for one day of promotion. How does that pace challenge your expectations about when God will move in your situation?"]},
+    {day:20,passage:"Genesis 42–43",title:"The Brothers Come to Egypt",focus:"Famine drives Jacob's sons to Egypt for grain — to the brother they sold into slavery twenty years ago. They don't recognize him. He recognizes them immediately.",teaching:"The famine strikes Canaan. Jacob sends ten of his sons to Egypt for grain — keeping Benjamin home, the youngest, born of Rachel, to protect him. Joseph sees his brothers and recognizes them immediately. He does not reveal himself. He speaks harshly, accuses them of being spies, and demands they bring their youngest brother. Why the delay? Joseph is not being cruel — he is testing them. He needs to know: have these men changed?\n\nIn prison, waiting, the brothers begin to speak among themselves: 'Surely we are being punished because of our brother. We saw how distressed he was when he pleaded with us for his life, but we would not listen' (42:21). Twenty years later, the guilt is still alive. Reuben says: 'Didn't I tell you not to sin against the boy?' Joseph, listening through an interpreter, turns away and weeps.\n\nHe returns Simeon as a guarantee, secretly puts their money back in their sacks, and sends them home. When they find the money, they are terrified: 'What is this that God has done to us?' (42:28). Their conscience is so guilty that they interpret a generous act as divine punishment. Guilt distorts everything.",keyVerses:["Genesis 42:21 — They said to one another, 'Surely we are being punished because of our brother.'","Genesis 42:24 — He turned away from them and began to weep, but then turned back and spoke to them again.","Genesis 43:14 — And may God Almighty grant you mercy before the man so that he will let your other brother and Benjamin come back with you."],questions:["Twenty years later, the brothers' guilt was still fresh. What unconfessed wrong in your past are you still carrying — and what would it cost you to deal with it?","Joseph wept privately before his brothers multiple times in these chapters. How do you handle deep emotion in high-stakes situations?","Jacob prays 'may God Almighty grant you mercy' before sending his sons back into danger. How does prayer change how we send people we love into uncertain situations?"]},
+    {day:21,passage:"Genesis 44–45",title:"The Test and the Revelation",focus:"Joseph sets a final test for his brothers. When they pass it, he can no longer hold back. He clears the room and weeps — then reveals himself: 'I am Joseph.'",teaching:"Joseph's final test is the most revealing. He plants his silver cup in Benjamin's sack and has his steward pursue the brothers. When the cup is found with Benjamin, Joseph declares Benjamin must stay as his slave. The brothers' response is everything: Judah — the one who had originally suggested selling Joseph — steps forward and offers himself in Benjamin's place.\n\nThis is the transformation Joseph has been watching for. The brothers who sold him to protect themselves are now willing to sacrifice themselves to protect their father's favorite son. They have changed. The test is complete.\n\nAnd Joseph can no longer control himself. He sends everyone out and weeps so loudly that Egyptians outside can hear him. 'I am Joseph! Is my father still living?' (45:3) — the brothers are speechless, terrified. His first words to them after everything they did: 'Come close to me' (45:4). Not accusation — invitation. Then the great theological reframe: 'Do not be distressed or angry with yourselves for selling me here, because it was to save lives that God sent me ahead of you' (45:5). He says this twice more. He is not minimizing what they did — he is placing it in the context of what God was doing.",keyVerses:["Genesis 44:33 — Now then, please let your servant remain here as my lord's slave in place of the boy, and let the boy return with his brothers.","Genesis 45:3 — Joseph said to his brothers, 'I am Joseph! Is my father still living?'","Genesis 45:5 — And now, do not be distressed and do not be angry with yourselves for selling me here, because it was to save lives that God sent me ahead of you."],questions:["Judah offered himself as a substitute for Benjamin — the same act Jesus performed for us. How do you see the gospel foreshadowed in Judah's offer?","Joseph's first words after revealing himself were 'Come close to me.' After everything — the betrayal, the years, the suffering — he pulls them in. What does that tell you about God's heart toward people who have failed Him?","'God sent me ahead of you' — Joseph saw God's purpose running through his suffering. Is there a painful chapter of your life that you are beginning to see in that light?"]},
+    {day:22,passage:"Genesis 46–47",title:"Jacob Goes Down to Egypt",focus:"An old man makes one more journey. Jacob — now called Israel — brings his whole family to Egypt. God meets him at the border and says: do not be afraid.",teaching:"Jacob is 130 years old. The son he mourned as dead for twenty years is alive and is second-in-command of Egypt. The emotional weight of this moment is almost impossible to overstate. Before leaving Canaan, Jacob stops at Beersheba — the same place where Abraham and Isaac had encountered God — and offers sacrifices.\n\nGod speaks to him in a vision at night: 'Do not be afraid to go down to Egypt, for I will make you into a great nation there. I will go down to Egypt with you, and I will surely bring you back again' (46:3–4). This is the assurance Jacob needs. He is not just moving — he is stepping into the next chapter of a promise that has been running through his family for three generations.\n\nThe reunion of Jacob and Joseph is one of the most moving scenes in Genesis. Joseph 'threw his arms around his father and wept for a long time' (46:29). Then Jacob: 'Now I am ready to die, since I have seen for myself that you are still alive' (46:30). The family settles in Goshen — the best land in Egypt. Genesis 47 shows Joseph's wisdom during the famine, and closes with the aging patriarch asking his son to swear that he will bury him in Canaan, not Egypt. Even in death, Jacob belongs to the promise.",keyVerses:["Genesis 46:3–4 — 'I am God, the God of your father,' he said. 'Do not be afraid to go down to Egypt, for I will make you into a great nation there. I will go down to Egypt with you.'","Genesis 46:29 — Joseph had his chariot made ready and went to Goshen to meet his father Israel. As soon as Joseph appeared before him, he threw his arms around his father and wept for a long time.","Genesis 47:9 — And Jacob said to Pharaoh, 'The years of my pilgrimage are a hundred and thirty. My years have been few and difficult.'"],questions:["God said 'I will go down to Egypt with you.' Is there a place or situation you're being asked to enter that feels like 'going down'? What does this promise mean for you?","Jacob described his life as 'few and difficult.' What would you say if someone asked you to summarize your life so far — and does that summary include God's faithfulness?","The reunion of Jacob and Joseph after twenty years. What long-separated relationship in your life do you hope God will restore?"]},
+    {day:23,passage:"Genesis 48–49",title:"Jacob's Blessings and the Prophecies",focus:"An old man lays his hands on his grandsons and his sons and speaks over each one. These are not just kind words — they are prophetic declarations that shape the history of Israel.",teaching:"Genesis 48: Jacob adopts Joseph's two sons, Ephraim and Manasseh, giving them full status as tribes in Israel. When Joseph presents them for blessing, he carefully places Manasseh (the firstborn) on Jacob's right hand. But Jacob crosses his arms — deliberately placing his right hand on Ephraim, the younger. Joseph tries to correct him. Jacob insists: the younger will be greater.\n\nThis is the fourth time in Genesis that the younger son receives the primary blessing over the firstborn: Abel over Cain, Isaac over Ishmael, Jacob over Esau, now Ephraim over Manasseh. God's pattern is consistent — He chooses by grace, not by birth order or human expectation.\n\nGenesis 49: Jacob gathers his twelve sons and speaks a prophetic blessing/declaration over each one. The most significant is the blessing on Judah (49:8–12): 'The scepter will not depart from Judah, nor the ruler's staff from between his feet, until he to whom it belongs shall come' (49:10). This is a direct messianic prophecy — the ruler from Judah's line who will gather all nations. Jesus is the Lion of Judah (Revelation 5:5).",keyVerses:["Genesis 48:14 — But Israel reached out his right hand and put it on Ephraim's head, though he was the younger.","Genesis 49:10 — The scepter will not depart from Judah, nor the ruler's staff from between his feet, until he to whom it belongs shall come and the obedience of the nations shall be his.","Genesis 49:18 — I look for your deliverance, LORD."],questions:["God consistently chooses the younger over the firstborn throughout Genesis. What does that pattern tell you about how God makes His choices — and how does it apply to you?","Jacob spoke specific, intentional words of blessing over each son. Have you ever spoken a deliberate blessing over someone you love? What would you say?","'The scepter will not depart from Judah' — this prophecy was fulfilled 2,000 years later in Jesus. How does the long arc of fulfilled prophecy strengthen your trust in God's Word?"]},
+    {day:24,passage:"Genesis 50",title:"You Intended Harm — God Intended Good",focus:"Jacob dies. The brothers panic that Joseph will now take revenge. Joseph's response is one of the greatest statements of faith in all Scripture.",teaching:"Jacob dies at 147, and Egypt mourns him for 70 days — an extraordinary tribute for a foreigner. Joseph weeps over his father's body and keeps his promise: he buries Jacob in the cave of Machpelah, the field Abraham bought, alongside Abraham, Sarah, Isaac, Rebekah, and Leah. The patriarchs are all together in Canaan — in the land of promise.\n\nThen the brothers panic: 'What if Joseph holds a grudge against us and pays us back for all the wrongs we did to him?' (50:15). They send a messenger with a fabricated story — Jacob supposedly left instructions for Joseph to forgive them. They fall prostrate before him: 'We are your slaves.'\n\nJoseph's response is one of the greatest statements of faith in all of Scripture: 'Don't be afraid. Am I in the place of God? You intended to harm me, but God intended it for good to accomplish what is now being done, the saving of many lives' (50:19–20). He is not minimizing their sin — he really suffered. He is placing their sin inside a larger story, and that story belongs to God.\n\nThis is Romans 8:28 before Romans 8:28. It is the theological backbone of the entire Joseph narrative — and one of the most important statements a suffering person can ever make.",keyVerses:["Genesis 50:15 — When Joseph's brothers saw that their father was dead, they said, 'What if Joseph holds a grudge against us?'","Genesis 50:19–20 — Joseph said to them, 'Don't be afraid. Am I in the place of God? You intended to harm me, but God intended it for good.'","Genesis 50:21 — So then, don't be afraid. I will provide for you and your children."],questions:["'You intended harm — God intended good.' Is there a harm done to you that you have not yet been able to place inside God's larger story? What would it take to get there?","Joseph said 'Am I in the place of God?' — he refused to take on the role of judge and avenger. Where are you tempted to take God's role in bringing justice or punishment?","Genesis ends with Joseph in a coffin in Egypt, with his bones waiting for the exodus. How does that image of hope-deferred-but-certain describe your own waiting on God right now?"]},
+    {day:25,passage:"Genesis 1–50 (Review)",title:"From Creation to a Coffin — The Story That Runs Through Everything",focus:"On the final day, we step back and look at the whole book. Genesis sets up everything that follows in the Bible — the creation, the fall, the covenant, the promise, and the waiting.",teaching:"Genesis is not just the beginning of the Bible — it is the foundation of everything. Every major theme in Scripture is introduced here: creation and the image of God, sin and its consequences, covenant and grace, sacrifice, redemption, sovereignty over suffering, and the promise of a coming deliverer.\n\nThe book moves in two major sections: Primeval History (chapters 1–11), which covers creation to Babel, dealing with universal human themes, and Patriarchal History (chapters 12–50), which narrows to one family through whom God will bless all peoples.\n\nThe great thread running through Genesis is the covenant. God makes it with Noah, then Abraham, then Isaac, then Jacob. Each time, He reaffirms the same core promise: descendants, land, and blessing to all nations. That last promise — all nations blessed through this family — is the mission of the entire Bible. It is fulfilled in Jesus.\n\nGenesis ends with a coffin. Joseph asks his brothers to carry his bones back to Canaan when God brings them back. He dies in faith, trusting a promise he will not live to see fulfilled. Hebrews 11:22 says: 'By faith Joseph, when his end was near, spoke about the exodus of the Israelites and gave instructions concerning the burial of his bones.' He did not see the Exodus. But he was certain it was coming. That is faith.",keyVerses:["Genesis 3:15 — He will crush your head, and you will strike his heel.","Genesis 12:3 — All peoples on earth will be blessed through you.","Genesis 50:20 — You intended to harm me, but God intended it for good.","Genesis 50:25 — And Joseph made the Israelites swear an oath and said, 'God will surely come to your aid, and then you must carry my bones up from this place.'"],questions:["Looking back over 25 days in Genesis, what is the single most important thing you have learned or been changed by?","Genesis traces the covenant promise from Adam to Noah to Abraham to Jacob to Joseph. Where do you see yourself in that story — and how do you carry the promise forward?","Joseph died trusting a promise he would never see fulfilled. What promise of God are you living toward right now — one you may not see completed in your lifetime?"]}
+  ]
+};
+
+// ── Storage ────────────────────────────────────────────────────────────────
+function getData() {
+  try { return JSON.parse(localStorage.getItem(PLAN.storageKey) || '{}'); } catch(e) { return {}; }
+}
+function saveData(d) {
+  try { localStorage.setItem(PLAN.storageKey, JSON.stringify(d)); } catch(e) {}
+}
+
+function syncCalendar(isDone) {
+  var CAL_KEY = 'bsh-calendar-v1';
+  var calId = 'genesis';
+  try {
+    var cal = JSON.parse(localStorage.getItem(CAL_KEY) || '{}');
+    var t = new Date();
+    var iso = t.getFullYear() + '-' + (t.getMonth()+1<10?'0':'') + (t.getMonth()+1) + '-' + (t.getDate()<10?'0':'') + t.getDate();
+    if (!cal[iso]) cal[iso] = [];
+    var idx = cal[iso].indexOf(calId);
+    if (isDone && idx === -1) cal[iso].push(calId);
+    if (!isDone && idx !== -1) cal[iso].splice(idx, 1);
+    if (!cal[iso].length) delete cal[iso];
+    localStorage.setItem(CAL_KEY, JSON.stringify(cal));
+  } catch(e) {}
+}
+
+// ── State ──────────────────────────────────────────────────────────────────
+var currentDayIdx = 0;
+var confirmingDelete = null;
+
+// ── Views ──────────────────────────────────────────────────────────────────
+function showView(id) {
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function showList()    { renderList(); showView('viewList'); }
+function showHistory() { renderHistory(); showView('viewHistory'); }
+function showDay(idx)  { currentDayIdx = idx; renderDay(); showView('viewDay'); }
+
+// ── Render list ────────────────────────────────────────────────────────────
+function renderList() {
+  var data = getData();
+  var completed = data.completed || {};
+  var notes = data.notes || {};
+  var doneCount = Object.keys(completed).filter(function(k) { return completed[k]; }).length;
+  var total = PLAN.days.length;
+  var pct = Math.round(doneCount / total * 100);
+
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = doneCount + ' / ' + total + ' days completed';
+
+  var totalNotes = Object.values(notes).reduce(function(s, a) { return s + (a ? a.length : 0); }, 0);
+  document.getElementById('notesCount').textContent = totalNotes + ' note' + (totalNotes !== 1 ? 's' : '') + ' \u203a';
+
+  var html = '';
+  PLAN.days.forEach(function(day, i) {
+    var done = !!completed[i];
+    var dayNotes = notes[i] || [];
+    html += '<div class="day-item' + (done ? ' done' : '') + '" onclick="showDay(' + i + ')">'
+      + '<div class="check-circle" onclick="event.stopPropagation();quickToggle(' + i + ')">' + (done ? '✓' : '') + '</div>'
+      + '<div class="day-info">'
+      + '<div class="day-num">Day ' + day.day + '</div>'
+      + '<div class="day-passage">' + day.passage + '</div>'
+      + '<div class="day-title">' + day.title + '</div>'
+      + '</div>'
+      + (dayNotes.length ? '<div class="note-badge">' + dayNotes.length + ' note' + (dayNotes.length > 1 ? 's' : '') + '</div>' : '')
+      + '</div>';
+  });
+  document.getElementById('dayList').innerHTML = html;
+}
+
+function quickToggle(idx) {
+  var data = getData();
+  if (!data.completed) data.completed = {};
+  data.completed[idx] = !data.completed[idx];
+  saveData(data);
+  syncCalendar(data.completed[idx]);
+  renderList();
+}
+
+// ── Render day ─────────────────────────────────────────────────────────────
+function renderDay() {
+  var data = getData();
+  var completed = data.completed || {};
+  var day = PLAN.days[currentDayIdx];
+  var done = !!completed[currentDayIdx];
+
+  document.getElementById('dayMeta').textContent = 'Day ' + day.day + ' of ' + PLAN.days.length;
+  document.getElementById('dayTitle').textContent = day.title;
+  document.getElementById('dayPassage').textContent = day.passage;
+  document.getElementById('dayFocus').textContent = day.focus;
+
+  var btn = document.getElementById('doneBtn');
+  btn.textContent = done ? '✓ Done' : 'Mark Done';
+  btn.className = 'done-btn' + (done ? ' is-done' : '');
+
+  document.getElementById('dayTeaching').innerHTML = day.teaching.split('\n\n').map(function(p) {
+    return '<div class="teaching-para">' + p + '</div>';
+  }).join('');
+
+  document.getElementById('dayVerses').innerHTML = day.keyVerses.map(function(v) {
+    return '<div class="verse-item">' + v + '</div>';
+  }).join('');
+
+  document.getElementById('dayQuestions').innerHTML = day.questions.map(function(q, i) {
+    return '<div class="question-item"><div class="q-num">' + (i+1) + '</div><div class="q-text">' + q + '</div></div>';
+  }).join('');
+
+  renderNotes();
+
+  document.getElementById('prevBtn').style.display = currentDayIdx > 0 ? 'block' : 'none';
+  document.getElementById('nextBtn').style.display = currentDayIdx < PLAN.days.length - 1 ? 'block' : 'none';
+
+  document.getElementById('aiResult').innerHTML = '<div class="ai-placeholder">Tap "Get Insight" for cross-references, historical context & extra commentary.</div>';
+  var aiBtn = document.getElementById('aiBtn');
+  aiBtn.disabled = false;
+  aiBtn.textContent = 'Get Insight';
+  aiBtn.style.display = 'inline-block';
+
+  document.getElementById('noteInput').value = '';
+  confirmingDelete = null;
+}
+
+function renderNotes() {
+  var data = getData();
+  var dayNotes = (data.notes || {})[currentDayIdx] || [];
+  var html = '';
+  dayNotes.forEach(function(n, ni) {
+    html += '<div class="note-entry">'
+      + '<div class="note-text">' + escHtml(n.text) + '</div>'
+      + '<div class="note-meta"><span>' + n.date + '</span>'
+      + '<button class="note-delete" onclick="askDelete(' + ni + ')">🗑</button></div>'
+      + (confirmingDelete === ni
+        ? '<div class="confirm-delete"><span>Delete this note?</span>'
+          + '<button class="confirm-yes" onclick="doDelete(' + ni + ')">Delete</button>'
+          + '<button class="confirm-no" onclick="cancelDelete()">Cancel</button></div>'
+        : '')
+      + '</div>';
+  });
+  document.getElementById('notesList').innerHTML = html;
+}
+
+function askDelete(ni)  { confirmingDelete = ni; renderNotes(); }
+function cancelDelete() { confirmingDelete = null; renderNotes(); }
+function doDelete(ni) {
+  var data = getData();
+  if (!data.notes) data.notes = {};
+  if (!data.notes[currentDayIdx]) data.notes[currentDayIdx] = [];
+  data.notes[currentDayIdx].splice(ni, 1);
+  saveData(data);
+  confirmingDelete = null;
+  renderNotes();
+}
+
+function saveNote() {
+  var text = document.getElementById('noteInput').value.trim();
+  if (!text) return;
+  var data = getData();
+  if (!data.notes) data.notes = {};
+  if (!data.notes[currentDayIdx]) data.notes[currentDayIdx] = [];
+  data.notes[currentDayIdx].push({ text: text, date: new Date().toLocaleString() });
+  saveData(data);
+  document.getElementById('noteInput').value = '';
+  confirmingDelete = null;
+  renderNotes();
+}
+
+function toggleDone() {
+  var data = getData();
+  if (!data.completed) data.completed = {};
+  data.completed[currentDayIdx] = !data.completed[currentDayIdx];
+  saveData(data);
+  syncCalendar(data.completed[currentDayIdx]);
+  renderDay();
+}
+
+function navDay(dir) {
+  currentDayIdx += dir;
+  renderDay();
+  window.scrollTo(0, 0);
+}
+
+// ── History ────────────────────────────────────────────────────────────────
+function renderHistory() {
+  var data = getData();
+  var notes = data.notes || {};
+  var all = [];
+  Object.keys(notes).forEach(function(idx) {
+    (notes[idx] || []).forEach(function(n, ni) {
+      all.push({ idx: parseInt(idx), ni: ni, note: n });
+    });
+  });
+  all.sort(function(a, b) { return new Date(b.note.date) - new Date(a.note.date); });
+
+  document.getElementById('historySubtitle').textContent = all.length + ' note' + (all.length !== 1 ? 's' : '') + ' across ' + PLAN.name;
+
+  if (!all.length) {
+    document.getElementById('historyList').innerHTML = '<div class="empty-state"><div class="e-icon">✍️</div><p>No notes yet.</p><p style="margin-top:6px;">Go into any day and save a note — it will appear here.</p></div>';
+    return;
+  }
+
+  document.getElementById('historyList').innerHTML = all.map(function(item) {
+    var day = PLAN.days[item.idx];
+    return '<div class="history-entry">'
+      + '<div class="history-day-link" onclick="showDay(' + item.idx + ')">Day ' + day.day + ' · ' + day.passage + ' — ' + day.title + ' \u203a</div>'
+      + '<div class="history-note-text">' + escHtml(item.note.text) + '</div>'
+      + '<div class="history-note-date">' + item.note.date + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ── AI Insight ─────────────────────────────────────────────────────────────
+function getInsight() {
+  var day = PLAN.days[currentDayIdx];
+  var btn = document.getElementById('aiBtn');
+  btn.disabled = true;
+  btn.textContent = 'Loading...';
+  document.getElementById('aiResult').innerHTML = '<div class="ai-placeholder">Thinking...</div>';
+
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: 'You are a warm Bible teacher. The student is studying ' + day.passage + ' — "' + day.title + '" in a Genesis reading plan. Give 3–4 sentences of deeper insight: a cross-reference to another Scripture, a cultural or historical detail, and one personal application. Rich but accessible.' }]
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var text = (d.content && d.content[0] && d.content[0].text) || 'Could not load insight.';
+    document.getElementById('aiResult').innerHTML = '<div class="ai-result">' + escHtml(text) + '</div>';
+    btn.style.display = 'none';
+  })
+  .catch(function() {
+    document.getElementById('aiResult').innerHTML = '<div class="ai-placeholder">Could not load. Please try again.</div>';
+    btn.disabled = false;
+    btn.textContent = 'Try Again';
+  });
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+renderList();
+</script>
+</body>
+</html>
